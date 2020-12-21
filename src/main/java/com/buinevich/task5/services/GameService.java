@@ -18,7 +18,6 @@ import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
@@ -34,6 +33,7 @@ public class GameService {
     private static final String GAME_CANT_BE_CREATED_WITHOUT_PLAYER_ONE = "Game cant't be created without player one.";
     private static final String GAME_ALREADY_EXISTS = "Game with this name already exists.";
     private static final String GAME_IS_FULL = "There is no free seats in the game.";
+    private static final String YOU_CANT_PLAY_WITH_YOURSELF = "You can't play with yourself.";
     private static final String GAME_OVER = "The game is over.";
     private static final String NOT_YOUR_TURN = "Now is not your turn.";
     private static final String WRONG_MOVE = "You can't move like that.";
@@ -43,17 +43,25 @@ public class GameService {
     private UserRepo userRepo;
     private GameMapper gameMapper;
 
-    public Collection<GameResponse> getGames(String[] tags) {
-        return Arrays.stream(tags)
+    public List<Game> getGames() {
+        return gameRepo.findAll();
+    }
+
+    public Collection<GameResponse> getGames(List<String> tags) {
+        if (tags == null || tags.isEmpty()) {
+            return gameRepo.findAllByWinnerIsNull().stream().map(game -> gameMapper.gameToGameResponse(game)).collect(Collectors.toList());
+        }
+        return tags.stream()
                 .filter(tag -> tagRepo.existsByText(tag))
                 .map(tag -> tagRepo.findByText(tag).orElseThrow(() -> new NotFoundException(TAG_NOT_FOUND)).getGames())
                 .flatMap(List::stream)
+                .filter(game -> game.getWinner() == null)
                 .map(game -> gameMapper.gameToGameResponse(game))
                 .collect(Collectors.toCollection(HashSet::new));
     }
 
     public GameResponse createGame(GameRequest gameRequest) {
-        if (gameRequest.getPlayerOne() != null) {
+        if (gameRequest.getPlayerOne() == null) {
             throw new BadRequestException(GAME_CANT_BE_CREATED_WITHOUT_PLAYER_ONE);
         }
         if (gameRepo.existsByName(gameRequest.getName())) {
@@ -64,30 +72,32 @@ public class GameService {
         return gameMapper.gameToGameResponse(newGame);
     }
 
-    public GameResponse joinTheGame(String gameName, String userName) {
-        Game game = gameRepo.findByName(gameName).orElseThrow(() -> new NotFoundException(GAME_NOT_FOUND));
+    public GameResponse joinTheGame(Long gameId, Long userId) {
+        Game game = gameRepo.findById(gameId).orElseThrow(() -> new NotFoundException(GAME_NOT_FOUND));
+        if (game.getPlayerOne().getId() == userId) {
+            throw new CantJoinException(YOU_CANT_PLAY_WITH_YOURSELF);
+        }
         if (game.getPlayerTwo() != null) {
             throw new CantJoinException(GAME_IS_FULL);
         }
-        User playerTwo = userRepo.findByName(userName).orElseThrow(() -> new NotFoundException(PLAYER_NOT_FOUND));
+        User playerTwo = userRepo.findById(userId).orElseThrow(() -> new NotFoundException(PLAYER_NOT_FOUND));
         game.setPlayerTwo(playerTwo);
         game.setTurn(game.getPlayerOne());
         gameRepo.save(game);
         return gameMapper.gameToGameResponse(game);
     }
 
-    public GameResponse getGame(String gameName) {
-        return gameMapper.gameToGameResponse(gameRepo.findByName(gameName).orElseThrow(() -> new NotFoundException(GAME_NOT_FOUND)));
+    public GameResponse getGame(long id) {
+        return gameMapper.gameToGameResponse(gameRepo.findById(id).orElseThrow(() -> new NotFoundException(GAME_NOT_FOUND)));
     }
 
-
     public GameResponse makeMove(MoveRequest moveRequest) {
-        Game game = gameRepo.findByName(moveRequest.getGameName()).orElseThrow(() -> new NotFoundException(GAME_NOT_FOUND));
+        Game game = gameRepo.findById(moveRequest.getGameId()).orElseThrow(() -> new NotFoundException(GAME_NOT_FOUND));
         if (game.getWinner() != null) {
             throw new MoveException(GAME_OVER);
         }
-        User user = userRepo.findByName(moveRequest.getUserName()).orElseThrow(() -> new NotFoundException(PLAYER_NOT_FOUND));
-        if (!game.getTurn().getName().equals(moveRequest.getUserName())) {
+        User user = userRepo.findById(moveRequest.getUserId()).orElseThrow(() -> new NotFoundException(PLAYER_NOT_FOUND));
+        if (game.getTurn().getId() != moveRequest.getUserId()) {
             throw new MoveException(NOT_YOUR_TURN);
         }
         switch (moveRequest.getMove()) {

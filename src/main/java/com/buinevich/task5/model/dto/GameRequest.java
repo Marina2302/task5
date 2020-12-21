@@ -17,7 +17,7 @@ public class GameRequest {
     @NotBlank(message = "Name is mandatory field.")
     String name;
     List<String> tags;
-    String playerOne;
-    String playerTwo;
+    Long playerOne;
+    Long playerTwo;
 
 }

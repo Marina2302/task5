@@ -6,7 +6,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-import java.util.HashSet;
+import java.util.List;
 
 @Getter
 @Setter
@@ -14,6 +14,8 @@ import java.util.HashSet;
 @AllArgsConstructor
 @Builder
 public class GameResponse {
+    private long id;
+
     private String name;
 
     private String playerOne;
@@ -24,7 +26,7 @@ public class GameResponse {
 
     private String turn;
 
-    private HashSet<String> tags;
+    private List<String> tags;
 
     private String moveOne;
     private String moveTwo;

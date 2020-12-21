@@ -1,5 +1,6 @@
 package com.buinevich.task5.config;
 
+import com.buinevich.task5.model.entities.User;
 import com.buinevich.task5.model.repositories.UserRepo;
 import lombok.AllArgsConstructor;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -17,6 +18,7 @@ public class CustomUserDetailsService implements UserDetailsService {
 
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        return userRepo.findByName(username).orElseThrow(() -> new UsernameNotFoundException(USER_NOT_FOUND));
+        User user = userRepo.findByName(username).orElseThrow(() -> new UsernameNotFoundException(USER_NOT_FOUND));
+        return CustomUserDetails.fromUserToCustomUserDetails(user);
     }
 }

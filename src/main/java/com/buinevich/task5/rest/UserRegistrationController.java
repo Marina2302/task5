@@ -30,7 +30,7 @@ public class UserRegistrationController {
     @PostMapping("/auth")
     public AuthResponse auth(@RequestBody AuthRequest request) {
         User user = userService.findByLoginAndPassword(request.getLogin(), request.getPassword());
-        String token = jwtProvider.generateToken(user.getName());
+        String token = jwtProvider.generateToken(user.getName(), user.getId());
         return new AuthResponse(token);
     }
 }

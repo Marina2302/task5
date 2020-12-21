@@ -25,19 +25,20 @@ public class GameMapper {
         Game game = Game.builder()
                 .name(gameRequest.getName())
                 .playerOne(gameRequest.getPlayerOne() != null
-                        ? userRepo.findByName(gameRequest.getPlayerOne())
+                        ? userRepo.findById(gameRequest.getPlayerOne())
                         .orElseThrow(() -> new NotFoundException("User with this name not found."))
                         : null)
                 .playerTwo(gameRequest.getPlayerTwo() != null
-                        ? userRepo.findByName(gameRequest.getPlayerTwo())
+                        ? userRepo.findById(gameRequest.getPlayerTwo())
                         .orElseThrow(() -> new NotFoundException("User with this name not found."))
                         : null)
-                .tags(gameRequest.getTags() != null && !gameRequest.getTags().isEmpty()
+                .tags((gameRequest.getTags() != null && !gameRequest.getTags().isEmpty())
                         ? gameRequest.getTags().stream()
-                        .map(tagRequest -> {
-                            Tag tag = tagRepo.findByText(tagRequest)
+                        .map(tagText -> {
+                            Tag tag = tagRepo.findByText(tagText)
                                     .orElse(tagRepo.save(Tag.builder()
-                                            .text(tagRequest)
+                                            .text(tagText)
+                                            .games(new ArrayList<>())
                                             .build()));
                             tag.setPopularity(tag.getPopularity() + 1L);
                             return tag;
@@ -55,12 +56,13 @@ public class GameMapper {
 
     public GameResponse gameToGameResponse(Game game) {
         return GameResponse.builder()
+                .id(game.getId())
                 .name(game.getName())
                 .playerOne(game.getPlayerOne() != null ? game.getPlayerOne().getName() : null)
                 .playerTwo(game.getPlayerTwo() != null ? game.getPlayerTwo().getName() : null)
                 .winner(game.getWinner() != null ? game.getWinner().getName() : null)
                 .turn(game.getTurn() != null ? game.getTurn().getName() : null)
-                .tags(game.getTags().stream().map(Tag::getText).collect(Collectors.toCollection(HashSet::new)))
+                .tags(game.getTags().stream().map(Tag::getText) .collect(Collectors.toList()))
                 .moveOne(game.getMoveOne() != null ? game.getMoveOne().getName() : null)
                 .moveTwo(game.getMoveTwo() != null ? game.getMoveTwo().getName() : null)
                 .moveThree(game.getMoveThree() != null ? game.getMoveThree().getName() : null)

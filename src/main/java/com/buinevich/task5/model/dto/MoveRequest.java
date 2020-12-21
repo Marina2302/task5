@@ -11,7 +11,7 @@ import lombok.Setter;
 @AllArgsConstructor
 @NoArgsConstructor
 public class MoveRequest {
-    String gameName;
-    String userName;
+    Long gameId;
+    Long userId;
     Move move;
 }

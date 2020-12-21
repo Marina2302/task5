@@ -12,7 +12,7 @@ import java.util.Collection;
 import java.util.stream.Collectors;
 
 @RestController
-@RequestMapping(name = "/tag")
+@RequestMapping(path = "/tags")
 @AllArgsConstructor
 public class TagController {
 
@@ -20,6 +20,6 @@ public class TagController {
 
     @GetMapping
     public Collection<String> getTags() {
-        return tagRepo.findAll(Sort.by(Sort.Direction.ASC, "popularity")).stream().map(Tag::getText).collect(Collectors.toList());
+        return tagRepo.findAll(Sort.by(Sort.Direction.DESC, "popularity")).stream().map(Tag::getText).collect(Collectors.toList());
     }
 }
