@@ -11,7 +11,6 @@ import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.stream.Collectors;
 
 @Component
@@ -35,8 +34,7 @@ public class GameMapper {
                 .tags((gameRequest.getTags() != null && !gameRequest.getTags().isEmpty())
                         ? gameRequest.getTags().stream()
                         .map(tagText -> {
-                            Tag tag = tagRepo.findByText(tagText)
-                                    .orElse(tagRepo.save(Tag.builder()
+                            Tag tag = tagRepo.findByText(tagText).orElseGet(() -> tagRepo.save(Tag.builder()
                                             .text(tagText)
                                             .games(new ArrayList<>())
                                             .build()));
@@ -62,7 +60,7 @@ public class GameMapper {
                 .playerTwo(game.getPlayerTwo() != null ? game.getPlayerTwo().getName() : null)
                 .winner(game.getWinner() != null ? game.getWinner().getName() : null)
                 .turn(game.getTurn() != null ? game.getTurn().getName() : null)
-                .tags(game.getTags().stream().map(Tag::getText) .collect(Collectors.toList()))
+                .tags(game.getTags().stream().map(Tag::getText).collect(Collectors.toList()))
                 .moveOne(game.getMoveOne() != null ? game.getMoveOne().getName() : null)
                 .moveTwo(game.getMoveTwo() != null ? game.getMoveTwo().getName() : null)
                 .moveThree(game.getMoveThree() != null ? game.getMoveThree().getName() : null)
